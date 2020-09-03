@@ -32,6 +32,7 @@ namespace Morpeh {
     //Unity
     using Unity.IL2CPP.CompilerServices;
     using UnityEngine.Scripting;
+    using Unsafe;
     using Debug = UnityEngine.Debug;
     using Il2Cpp = Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute;
 
@@ -2151,7 +2152,7 @@ namespace Morpeh {
                 return;
             }
 
-            info = new CommonTypeIdentifier.TypeInfo(UnsafeUtility.SizeOf<T>() == 1, typeof(IDisposable).IsAssignableFrom(typeof(T)));
+            info = new CommonTypeIdentifier.TypeInfo(UnsafeHelper.SizeOf<T>() == 1, typeof(IDisposable).IsAssignableFrom(typeof(T)));
             var id = CommonTypeIdentifier.GetID<T>();
             info.SetID(id);
         }
@@ -3758,24 +3759,6 @@ namespace Morpeh {
                 }
 
                 throw new Exception("Prime is too big");
-            }
-        }
-    }
-
-    namespace Utils {
-        using System.Diagnostics;
-        using Debug = UnityEngine.Debug;
-
-        [Il2Cpp(Option.NullChecks, false)]
-        [Il2Cpp(Option.ArrayBoundsChecks, false)]
-        [Il2Cpp(Option.DivideByZeroChecks, false)]
-        internal static class UnsafeUtility {
-            public static int SizeOf<T>() where T : struct {
-#if UNITY_2019_1_OR_NEWER
-                return Unity.Collections.LowLevel.Unsafe.UnsafeUtility.SizeOf<T>();
-#else
-                return System.Runtime.InteropServices.Marshal.SizeOf(default(T));
-#endif
             }
         }
     }
