@@ -68,7 +68,7 @@ namespace Morpeh {
     public interface IValidatable {
         void OnValidate();
     }
-    
+
     public interface IValidatableWithGameObject {
         void OnValidate(GameObject gameObject);
     }
@@ -1671,7 +1671,8 @@ namespace Morpeh {
         [Il2Cpp(Option.ArrayBoundsChecks, false)]
         [Il2Cpp(Option.DivideByZeroChecks, false)]
         public abstract class ComponentsBag : IDisposable {
-            public int typeId;
+            public int  typeId;
+            public long typeSize;
 
             internal abstract void AddArchetype(Archetype archetype);
 
@@ -1693,7 +1694,9 @@ namespace Morpeh {
             internal FastList<Archetype.ComponentsBagPart> parts;
 
             public ComponentsBag(Filter filter) {
-                this.typeId = TypeIdentifier<T>.info.id;
+                var info = TypeIdentifier<T>.info;
+                this.typeId   = info.id;
+                this.typeSize = info.size;
 
                 this.parts      = new FastList<Archetype.ComponentsBagPart>();
                 this.filter     = filter;
@@ -2043,21 +2046,21 @@ namespace Morpeh {
     [Il2Cpp(Option.DivideByZeroChecks, false)]
     public static class ComponentsBagExtensions {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T GetComponent<T>(this Filter.ComponentsBag<T> bag, in int index) where T : struct, IComponent {
+        public static unsafe ref T GetComponent<T>(this Filter.ComponentsBag<T> bag, in int index) where T : struct, IComponent {
             if (bag.parts.length > 1) {
                 int offset = 0;
                 for (int i = 0, length = bag.parts.length; i < length; i++) {
                     var part  = bag.parts.data[i];
                     var check = offset + part.ids.length;
                     if (index < check) {
-                        return ref bag.components.data[part.ids.Get(index - offset)];
+                        return ref UnsafeHelper.ArrayElementWithSizeAsRef<T>(bag.components.pointer, part.ids.Get(index - offset), bag.typeSize);
                     }
 
                     offset = check;
                 }
             }
 
-            return ref bag.components.data[bag.firstPartIds.Get(index)];
+            return ref UnsafeHelper.ArrayElementWithSizeAsRef<T>(bag.components.pointer, bag.firstPartIds.Get(index), bag.typeSize);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2121,12 +2124,15 @@ namespace Morpeh {
             [SerializeField]
             internal int id;
             [SerializeField]
+            internal long size;
+            [SerializeField]
             internal bool isMarker;
             [SerializeField]
             internal bool isDisposable;
 
-            public TypeInfo(bool isMarker, bool isDisposable) {
-                this.isMarker     = isMarker;
+            public TypeInfo(long size, bool isDisposable) {
+                this.size         = size;
+                this.isMarker     = size == 1;
                 this.isDisposable = isDisposable;
             }
 
@@ -2152,7 +2158,7 @@ namespace Morpeh {
                 return;
             }
 
-            info = new CommonTypeIdentifier.TypeInfo(UnsafeHelper.SizeOf<T>() == 1, typeof(IDisposable).IsAssignableFrom(typeof(T)));
+            info = new CommonTypeIdentifier.TypeInfo(UnsafeHelper.SizeOf<T>(), typeof(IDisposable).IsAssignableFrom(typeof(T)));
             var id = CommonTypeIdentifier.GetID<T>();
             info.SetID(id);
         }
@@ -2197,7 +2203,8 @@ namespace Morpeh {
         }
 
         internal ComponentsCache() {
-            this.typeId = TypeIdentifier<T>.info.id;
+            var info = TypeIdentifier<T>.info;
+            this.typeId = info.id;
 
             this.components  = new FastList<T>(Constants.DEFAULT_CACHE_COMPONENTS_CAPACITY);
             this.freeIndexes = new IntStack();
@@ -2312,6 +2319,8 @@ namespace Morpeh {
     }
 
     namespace Collections {
+        using System.Runtime.InteropServices;
+
         [Serializable]
         [Il2Cpp(Option.NullChecks, false)]
         [Il2Cpp(Option.ArrayBoundsChecks, false)]
@@ -3275,39 +3284,61 @@ namespace Morpeh {
         [Il2Cpp(Option.NullChecks, false)]
         [Il2Cpp(Option.ArrayBoundsChecks, false)]
         [Il2Cpp(Option.DivideByZeroChecks, false)]
-        public sealed class FastList<T> : IEnumerable<T> {
+        public sealed unsafe class FastList<T> : IEnumerable<T>, IDisposable {
             public T[] data;
             public int length;
             public int capacity;
+
+            public GCHandle handle;
+            public void*    pointer;
 
             public EqualityComparer<T> comparer;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public FastList() {
+                this.length   = 0;
                 this.capacity = 3;
                 this.data     = new T[this.capacity];
-                this.length   = 0;
+                this.handle   = GCHandle.Alloc(this.data, GCHandleType.Pinned);
+                this.pointer  = this.handle.AddrOfPinnedObject().ToPointer();
 
                 this.comparer = EqualityComparer<T>.Default;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public FastList(int capacity) {
+                this.length   = 0;
                 this.capacity = HashHelpers.GetPrime(capacity);
                 this.data     = new T[this.capacity];
-                this.length   = 0;
+                this.handle   = GCHandle.Alloc(this.data, GCHandleType.Pinned);
+                this.pointer  = this.handle.AddrOfPinnedObject().ToPointer();
 
                 this.comparer = EqualityComparer<T>.Default;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public FastList(FastList<T> other) {
+                this.length   = other.length;
                 this.capacity = other.capacity;
                 this.data     = new T[this.capacity];
-                this.length   = other.length;
+                this.handle   = GCHandle.Alloc(this.data, GCHandleType.Pinned);
+                this.pointer  = this.handle.AddrOfPinnedObject().ToPointer();
+
                 Array.Copy(other.data, 0, this.data, 0, this.length);
 
                 this.comparer = other.comparer;
+            }
+            
+            ~FastList() {
+                if (this.handle.IsAllocated) {
+                    this.handle.Free();
+                }
+            }
+            
+            public void Dispose() {
+                if (this.handle.IsAllocated) {
+                    this.handle.Free();
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3365,12 +3396,15 @@ namespace Morpeh {
         [Il2Cpp(Option.NullChecks, false)]
         [Il2Cpp(Option.ArrayBoundsChecks, false)]
         [Il2Cpp(Option.DivideByZeroChecks, false)]
-        public static class FastListExtensions {
+        public static unsafe class FastListExtensions {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static int Add<T>(this FastList<T> list) {
                 var index = list.length;
                 if (++list.length == list.capacity) {
+                    list.handle.Free();
                     ArrayHelpers.Grow(ref list.data, list.capacity <<= 1);
+                    list.handle  = GCHandle.Alloc(list.data, GCHandleType.Pinned);
+                    list.pointer = list.handle.AddrOfPinnedObject().ToPointer();
                 }
 
                 return index;
@@ -3380,7 +3414,10 @@ namespace Morpeh {
             public static int Add<T>(this FastList<T> list, T value) {
                 var index = list.length;
                 if (++list.length == list.capacity) {
+                    list.handle.Free();
                     ArrayHelpers.Grow(ref list.data, list.capacity <<= 1);
+                    list.handle  = GCHandle.Alloc(list.data, GCHandleType.Pinned);
+                    list.pointer = list.handle.AddrOfPinnedObject().ToPointer();
                 }
 
                 list.data[index] = value;
@@ -3396,7 +3433,10 @@ namespace Morpeh {
                             list.capacity <<= 1;
                         }
 
+                        list.handle.Free();
                         ArrayHelpers.Grow(ref list.data, list.capacity);
+                        list.handle  = GCHandle.Alloc(list.data, GCHandleType.Pinned);
+                        list.pointer = list.handle.AddrOfPinnedObject().ToPointer();
                     }
 
                     if (list == other) {
@@ -3476,32 +3516,54 @@ namespace Morpeh {
         [Il2Cpp(Option.NullChecks, false)]
         [Il2Cpp(Option.ArrayBoundsChecks, false)]
         [Il2Cpp(Option.DivideByZeroChecks, false)]
-        public sealed unsafe class IntFastList : IEnumerable<int> {
+        public sealed unsafe class IntFastList : IEnumerable<int>, IDisposable {
             public int length;
             public int capacity;
 
             public int[] data;
+            
+            public GCHandle handle;
+            public void*    pointer;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public IntFastList() {
+                this.length   = 0;
                 this.capacity = 3;
                 this.data     = new int[this.capacity];
-                this.length   = 0;
+                this.handle   = GCHandle.Alloc(this.data, GCHandleType.Pinned);
+                this.pointer  = this.handle.AddrOfPinnedObject().ToPointer();
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public IntFastList(int capacity) {
+                this.length   = 0;
                 this.capacity = HashHelpers.GetPrime(capacity);
                 this.data     = new int[this.capacity];
-                this.length   = 0;
+                this.handle   = GCHandle.Alloc(this.data, GCHandleType.Pinned);
+                this.pointer  = this.handle.AddrOfPinnedObject().ToPointer();
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public IntFastList(IntFastList other) {
+                this.length   = other.length;
                 this.capacity = other.capacity;
                 this.data     = new int[this.capacity];
-                this.length   = other.length;
+                this.handle   = GCHandle.Alloc(this.data, GCHandleType.Pinned);
+                this.pointer  = this.handle.AddrOfPinnedObject().ToPointer();
+                
                 Array.Copy(other.data, 0, this.data, 0, this.length);
+            }
+            
+            ~IntFastList() {
+                if (this.handle.IsAllocated) {
+                    this.handle.Free();
+                }
+            }
+            
+            public void Dispose() {
+                if (this.handle.IsAllocated) {
+                    this.handle.Free();
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3567,7 +3629,10 @@ namespace Morpeh {
             public static int Add(this IntFastList list) {
                 var index = list.length;
                 if (++list.length == list.capacity) {
+                    list.handle.Free();
                     ArrayHelpers.Grow(ref list.data, list.capacity <<= 1);
+                    list.handle  = GCHandle.Alloc(list.data, GCHandleType.Pinned);
+                    list.pointer = list.handle.AddrOfPinnedObject().ToPointer();
                 }
 
                 return index;
@@ -3575,9 +3640,10 @@ namespace Morpeh {
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static int Get(this IntFastList list, in int index) {
-                fixed (int* d = &list.data[0]) {
-                    return *(d + index);
-                }
+                return UnsafeHelper.ArrayElementWithSizeAsRef<int>(list.pointer, index, 4);
+                // fixed (int* d = &list.data[0]) {
+                //     return *(d + index);
+                // }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3591,7 +3657,10 @@ namespace Morpeh {
             public static int Add(this IntFastList list, in int value) {
                 var index = list.length;
                 if (++list.length == list.capacity) {
+                    list.handle.Free();
                     ArrayHelpers.Grow(ref list.data, list.capacity <<= 1);
+                    list.handle  = GCHandle.Alloc(list.data, GCHandleType.Pinned);
+                    list.pointer = list.handle.AddrOfPinnedObject().ToPointer();
                 }
 
                 fixed (int* p = &list.data[0]) {
@@ -3610,7 +3679,10 @@ namespace Morpeh {
                             list.capacity <<= 1;
                         }
 
+                        list.handle.Free();
                         ArrayHelpers.Grow(ref list.data, list.capacity);
+                        list.handle  = GCHandle.Alloc(list.data, GCHandleType.Pinned);
+                        list.pointer = list.handle.AddrOfPinnedObject().ToPointer();
                     }
 
                     if (list == other) {
