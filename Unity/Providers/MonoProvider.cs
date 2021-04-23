@@ -1,4 +1,5 @@
 ﻿namespace Morpeh {
+    using Frigg;
     using UnityEngine;
 #if UNITY_EDITOR && ODIN_INSPECTOR
     using Sirenix.OdinInspector;
@@ -8,15 +9,15 @@
         [SerializeField]
         [HideInInspector]
         private T serializedData;
-#if UNITY_EDITOR && ODIN_INSPECTOR
+//#if UNITY_EDITOR && ODIN_INSPECTOR
         private string typeName = typeof(T).Name;
 
         [PropertySpace]
         [ShowInInspector]
-        [PropertyOrder(1)]
+        [Order(1)]
         [HideLabel]
         [InlineProperty]
-#endif
+//#endif
         private T Data {
             get {
                 if (this.Entity != null) {

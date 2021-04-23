@@ -1,5 +1,6 @@
 ﻿namespace Morpeh.Globals {
     using System;
+    using Frigg;
     using JetBrains.Annotations;
     using UnityEditor;
     using UnityEngine;
@@ -19,22 +20,22 @@
         [Space]
         [Header("Runtime Data")]
         [SerializeField]
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        [PropertyOrder(10)]
+//#if UNITY_EDITOR && ODIN_INSPECTOR
+        [Order(10)]
         [OnValueChanged(nameof(OnChange))]
-        [DelayedProperty]
+        //[DelayedProperty]
         [HideLabel]
-#endif
+//#endif
         protected TData value;
         [HideInInspector]
         [SerializeField]
         private string defaultSerializedValue;
         private const string COMMON_KEY = "MORPEH__GLOBALS_VARIABLES_";
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        [HideInInlineEditors]
-        [PropertyOrder(1)]
-        [ShowIf("@" + nameof(AutoSave) + " && " + nameof(CanBeAutoSaved))]
-#endif
+//#if UNITY_EDITOR && ODIN_INSPECTOR
+        //[HideInInlineEditors]
+        [Order(1)]
+        //[ShowIf("@" + nameof(AutoSave) + " && " + nameof(CanBeAutoSaved))]
+//#endif
         [SerializeField]
         private string customKey;
         // ReSharper disable once InconsistentNaming
@@ -52,11 +53,11 @@
 
         public virtual bool CanBeAutoSaved => true;
         [Header("Saving Settings")]
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        [HideInInlineEditors]
-        [PropertyOrder(0)]
+//#if UNITY_EDITOR && ODIN_INSPECTOR
+        //[HideInInlineEditors]
+        [Order(0)]
         [ShowIf(nameof(CanBeAutoSaved))]
-#endif
+//#endif
         public bool AutoSave;
         private bool HasPlayerPrefsValue            => PlayerPrefs.HasKey(this.Key);
         private bool HasPlayerPrefsValueAndAutoSave => PlayerPrefs.HasKey(this.Key) && this.AutoSave;
@@ -128,12 +129,12 @@
             }
         }
 #endif
-#if UNITY_EDITOR && ODIN_INSPECTOR
+//#if UNITY_EDITOR && ODIN_INSPECTOR
         [Button]
-        [PropertyOrder(3)]
+        [Order(3)]
         [ShowIf("@AutoSave")]
-        [HideInInlineEditors]
-#endif
+        //[HideInInlineEditors]
+//#endif
 #if UNITY_EDITOR
         private void GenerateCustomKey() {
             this.__internalKey = null;
@@ -203,12 +204,12 @@
         #region EDITOR
 
 #if UNITY_EDITOR
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        [HideInInlineEditors]
-        [ShowIf("@" + nameof(HasPlayerPrefsValueAndAutoSave))]
-        [PropertyOrder(4)]
+//#if UNITY_EDITOR && ODIN_INSPECTOR
+        //[HideInInlineEditors]
+        [ShowIf(nameof(HasPlayerPrefsValueAndAutoSave))]
+        [Order(4)]
         [Button]
-#endif
+//#endif
         internal void ResetPlayerPrefsValue() {
             if (this.HasPlayerPrefsValue) {
                 PlayerPrefs.DeleteKey(this.Key);

@@ -1,23 +1,18 @@
+using Frigg;
+
 namespace Morpeh {
     using System;
     using System.Collections.Generic;
     using UnityEngine;
-#if UNITY_EDITOR && ODIN_INSPECTOR
-    using Sirenix.OdinInspector;
-#endif
-
-#if UNITY_EDITOR && ODIN_INSPECTOR
+    
     [HideMonoScript]
-#endif
     public class WorldViewer : MonoBehaviour {
-      
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        [DisableContextMenu]
+        //[DisableContextMenu]
         [PropertySpace]
         [ShowInInspector]
-        [PropertyOrder(-1)]
-        [HideReferenceObjectPickerAttribute]
-        [ListDrawerSettings(DraggableItems = false, HideAddButton = true, HideRemoveButton = true)]
+        [Order(-1)]
+        //[HideReferenceObjectPickerAttribute]
+        [ListDrawerSettings(AllowDrag = false, HideAddButton = true, HideRemoveButton = true)]
         private List<EntityView> Entities {
             get {
                 if (Application.isPlaying) {
@@ -40,15 +35,14 @@ namespace Morpeh {
 
         private readonly List<EntityView> entityViews = new List<EntityView>();
 
-        [DisableContextMenu]
+        //[DisableContextMenu]
         [Serializable]
         protected internal class EntityView {
-            [ReadOnly]
+            [Readonly]
             public int ID;
             
             [ShowInInspector]
             internal Editor.EntityViewer entityViewer = new Editor.EntityViewer();
         }
-#endif
     }
 }

@@ -1,5 +1,6 @@
 ﻿namespace Morpeh.Providers {
     using System.Collections.Generic;
+    using Frigg;
     using Globals;
     using Unity.IL2CPP.CompilerServices;
 #if UNITY_EDITOR && ODIN_INSPECTOR
@@ -13,46 +14,46 @@
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     [AddComponentMenu("ECS/" + nameof(ObjectsProvider))]
     public sealed class ObjectsProvider : MonoBehaviour {
-#if UNITY_EDITOR && ODIN_INSPECTOR
+//#if UNITY_EDITOR && ODIN_INSPECTOR
         [Header("Global Variables")]
-        [TableList(AlwaysExpanded = true)]
+        //[TableList(AlwaysExpanded = true)]
         [HideLabel]
-#endif
+//#endif
         public List<ObjectPair> table;
         
-#if UNITY_EDITOR && ODIN_INSPECTOR
+//#if UNITY_EDITOR && ODIN_INSPECTOR
         [Space]
         [Header("Global List Variables")]
-        [TableList(AlwaysExpanded = true)]
+        //[TableList(AlwaysExpanded = true)]
         [HideLabel]
-#endif
+//#endif
         public List<ObjectListPair> tableList;
 
         [System.Serializable]
         public class ObjectListPair {
-#if UNITY_EDITOR && ODIN_INSPECTOR
-            [HorizontalGroup("Variables")]
+//#if UNITY_EDITOR && ODIN_INSPECTOR
+            //[HorizontalGroup("Variables")]
             [HideLabel]
-#endif
+//#endif
             public GlobalVariableListObject variable;
-#if UNITY_EDITOR && ODIN_INSPECTOR
-            [HorizontalGroup("Objects")]
+///#if UNITY_EDITOR && ODIN_INSPECTOR
+            //[HorizontalGroup("Objects")]
             [HideLabel]
-#endif
+//#endif
             public Object obj;
         }
         
         [System.Serializable]
         public class ObjectPair {
-#if UNITY_EDITOR && ODIN_INSPECTOR
-            [HorizontalGroup("Variables")]
+//#if UNITY_EDITOR && ODIN_INSPECTOR
+            //[HorizontalGroup("Variables")]
             [HideLabel]
-#endif
+//#endif
             public GlobalVariableObject variable;
-#if UNITY_EDITOR && ODIN_INSPECTOR
-            [HorizontalGroup("Objects")]
+//#if UNITY_EDITOR && ODIN_INSPECTOR
+            //[HorizontalGroup("Objects")]
             [HideLabel]
-#endif
+//#endif
             public Object obj;
         }
 

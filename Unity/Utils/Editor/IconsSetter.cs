@@ -8,7 +8,7 @@
     using UnityEngine;
     using Object = UnityEngine.Object;
 
-    internal class IconsSetter : AssetPostprocessor {
+    internal class sIconsSetter : AssetPostprocessor {
         private static Action<Object, Texture2D> SelectIcon;
         private static Action<MonoScript>        SaveIcon;
 

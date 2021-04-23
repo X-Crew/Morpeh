@@ -1,13 +1,12 @@
-﻿namespace Morpeh {
+﻿using Frigg;
+
+namespace Morpeh {
 #if UNITY_EDITOR
     using UnityEditor;
 #endif
     using System.Linq;
     using UnityEngine;
     using Utils;
-#if UNITY_EDITOR && ODIN_INSPECTOR
-    using Sirenix.OdinInspector;
-#endif
     using Unity.IL2CPP.CompilerServices;
 
     [Il2CppSetOption(Option.NullChecks, false)]
@@ -15,39 +14,31 @@
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     [AddComponentMenu("ECS/" + nameof(Installer))]
     public sealed class Installer : BaseInstaller {
-#if UNITY_EDITOR && ODIN_INSPECTOR
         [Required]
-        [InfoBox("Order collision with other installer!", InfoMessageType.Error, nameof(IsCollisionWithOtherInstaller))]
-        [PropertyOrder(-5)]
-#endif
+        [InfoBox("Order collision with other installer!", InfoMessageType = InfoMessageType.Error, 
+            Member = nameof(IsCollisionWithOtherInstaller))]
+        [Order(-5)]
         public int order;
-        
-#if UNITY_EDITOR && ODIN_INSPECTOR
+
         private bool IsCollisionWithOtherInstaller 
             => this.IsPrefab() == false && FindObjectsOfType<Installer>().Where(i => i != this).Any(i => i.order == this.order);
         
         private bool IsPrefab() => this.gameObject.scene.name == null;
-#endif
-        
-        [Space]
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        [PropertyOrder(-5)]
-#endif
+
+        [Order(-5)]
+        [PropertySpace(SpaceBefore = 5)]
         public Initializer[] initializers;
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        [PropertyOrder(-4)]
+        
+        [Order(-4)]
         [OnValueChanged(nameof(OnValueChangedUpdate))]
-#endif
         public UpdateSystemPair[] updateSystems;
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        [PropertyOrder(-3)]
+        
+        [Order(-3)]
         [OnValueChanged(nameof(OnValueChangedFixedUpdate))]
-#endif
         public FixedSystemPair[] fixedUpdateSystems;
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        [PropertyOrder(-2)]
+        
+        [Order(-2)]
         [OnValueChanged(nameof(OnValueChangedLateUpdate))]
-#endif
         public LateSystemPair[] lateUpdateSystems;
 
         private SystemsGroup group;
@@ -143,28 +134,22 @@
     namespace Utils {
         using System;
         using JetBrains.Annotations;
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        using Sirenix.OdinInspector;
-#endif
+        
         [Serializable]
         public abstract class BasePair<T> where T : class, ISystem {
             internal SystemsGroup group;
             
             [SerializeField]
-#if UNITY_EDITOR && ODIN_INSPECTOR
-            [HorizontalGroup("Pair", 10)]
+            //[HorizontalGroup("Pair", 10)]
             [HideLabel]
             [OnValueChanged(nameof(OnChange))]
-#endif
             private bool enabled;
-
+            
 #pragma warning disable CS0649
             [SerializeField]
-#if UNITY_EDITOR && ODIN_INSPECTOR
-            [HorizontalGroup("Pair")]
+            //[HorizontalGroup("Pair")]
             [HideLabel]
             [Required]
-#endif
             [CanBeNull]
             private T system;
 #pragma warning restore CS0649

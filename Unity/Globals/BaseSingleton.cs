@@ -1,9 +1,7 @@
 ﻿namespace Morpeh.Globals {
     using System;
+    using Frigg;
     using JetBrains.Annotations;
-#if ODIN_INSPECTOR
-    using Sirenix.OdinInspector;
-#endif
     using Unity.IL2CPP.CompilerServices;
 #if UNITY_EDITOR
     using UnityEditor;
@@ -15,19 +13,19 @@
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     public abstract class BaseSingleton : ScriptableObject {
         [SerializeField]
-#if ODIN_INSPECTOR
-        [ReadOnly]
-#endif
+//#if ODIN_INSPECTOR
+        [Readonly]
+//#endif
         protected int internalEntityID = -1;
 
         protected Entity internalEntity;
 
-#if UNITY_EDITOR && ODIN_INSPECTOR
-        [PropertyOrder(100)]
+//#if UNITY_EDITOR && ODIN_INSPECTOR
+        [Order(100)]
         [ShowInInspector]
         [Space]
         private Morpeh.Editor.EntityViewerWithHeader entityViewer = new Morpeh.Editor.EntityViewerWithHeader();
-#endif
+//#endif
 
         [CanBeNull]
         private protected Entity InternalEntity {

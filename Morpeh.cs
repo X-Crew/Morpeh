@@ -25,11 +25,11 @@ namespace Morpeh {
     using UnityEngine;
     using Object = UnityEngine.Object;
 #endif
-    //Odin
-    using Sirenix.OdinInspector;
     //Morpeh
     using Utils;
     using Collections;
+    //Frigg
+    using Frigg;
     //Unity
     using Unity.IL2CPP.CompilerServices;
     using UnityEngine.Scripting;
@@ -3816,10 +3816,10 @@ namespace JetBrains.Annotations {
 }
 #endif
 
-#if !ODIN_INSPECTOR
+/*#if !ODIN_INSPECTOR
 namespace Sirenix.OdinInspector {
     using System;
     [AttributeUsage(AttributeTargets.All, Inherited = false)]
     public class ShowInInspectorAttribute : Attribute { }
 }
-#endif
+#endif*/

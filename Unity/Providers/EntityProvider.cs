@@ -1,20 +1,16 @@
 namespace Morpeh {
+    using Frigg;
     using JetBrains.Annotations;
     using Unity.IL2CPP.CompilerServices;
     using UnityEngine;
-#if UNITY_EDITOR && ODIN_INSPECTOR
-    using Sirenix.OdinInspector;
-#endif
 
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     [AddComponentMenu("ECS/" + nameof(EntityProvider))]
     public class EntityProvider : MonoBehaviour {
-#if UNITY_EDITOR && ODIN_INSPECTOR
         [ShowInInspector]
-        [ReadOnly]
-#endif
+        [Readonly]
         protected int internalEntityID = -1;
 
         [CanBeNull]
@@ -48,7 +44,7 @@ namespace Morpeh {
         public Entity Entity => this.InternalEntity;
 
         private protected virtual void OnEnable() {
-#if UNITY_EDITOR && ODIN_INSPECTOR
+#if UNITY_EDITOR
             this.entityViewer.getter = () => this.InternalEntity;
 #endif
             if (!Application.isPlaying) {
@@ -102,7 +98,7 @@ namespace Morpeh {
         protected virtual void Initialize() {
         }
 
-#if UNITY_EDITOR && ODIN_INSPECTOR
+//#if UNITY_EDITOR && ODIN_INSPECTOR
         private bool IsNotEntityProvider {
             get {
                 var type = this.GetType();
@@ -110,10 +106,11 @@ namespace Morpeh {
             }
         }
 
-        [HideIf("$" + nameof(IsNotEntityProvider))]
+        //[HideIf("$" + nameof(IsNotEntityProvider))]
+        [HideIf(nameof(IsNotEntityProvider), Condition = true)]
         [ShowInInspector]
-        [PropertyOrder(100)]
+        [Order(100)]
         private Editor.EntityViewerWithHeader entityViewer = new Editor.EntityViewerWithHeader();
-#endif
+//#endif
     }
 }

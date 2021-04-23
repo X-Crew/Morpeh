@@ -1,9 +1,7 @@
 ﻿namespace Morpeh {
     using System.Collections.Generic;
+    using Frigg;
     using Globals;
-#if UNITY_EDITOR && ODIN_INSPECTOR
-    using Sirenix.OdinInspector;
-#endif
     using Unity.IL2CPP.CompilerServices;
     using UnityEngine;
 
@@ -46,9 +44,9 @@
         public class Configuration {
             public BaseGlobal variable;
             [SerializeReference]
-#if UNITY_EDITOR && ODIN_INSPECTOR
+#if UNITY_EDITOR
             [HideIf("@variable == null")]
-            [HideReferenceObjectPicker]
+            //[HideReferenceObjectPicker]
 #endif
             public DataWrapper wrapper;
         }

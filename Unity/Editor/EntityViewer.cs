@@ -1,15 +1,16 @@
-﻿#if UNITY_EDITOR && ODIN_INSPECTOR
+﻿using Frigg;
+
+#if UNITY_EDITOR
 namespace Morpeh.Editor {
     using System;
     using System.Collections.Generic;
     using Collections;
     using Morpeh;
-    using Sirenix.OdinInspector;
     using UnityEngine;
 
     [Serializable]
     [InlineProperty]
-    [HideReferenceObjectPicker]
+    //[HideReferenceObjectPicker]
     [HideLabel]
     internal class EntityViewer {
         internal Func<Entity> getter = () => null;
@@ -17,11 +18,52 @@ namespace Morpeh.Editor {
 
         private readonly List<ComponentView> componentViews = new List<ComponentView>();
 
-        [DisableContextMenu]
+        /*[PropertySpace]
+        [ShowInInspector]
+        private List<JustSomeTest> someTest = new List<JustSomeTest>();
+
         [PropertySpace]
         [ShowInInspector]
-        [HideReferenceObjectPickerAttribute]
-        [ListDrawerSettings(DraggableItems = false, HideAddButton = true, HideRemoveButton = true)]
+        private List<JustSomeTest> someTestProp {
+            get {
+                return new List<JustSomeTest> {
+                    new JustSomeTest {
+                        publicShownStr = "test",
+                        SomeInternalStuff = "123"
+                    },
+                    new JustSomeTest {
+                        publicShownStr    = "test",
+                        SomeInternalStuff = "123"
+                    },
+                    new JustSomeTest {
+                        publicShownStr    = "test",
+                        SomeInternalStuff = "123"
+                    }
+                };
+            }
+            set { }
+        }*/
+
+        [Serializable]
+        private struct JustSomeTest {
+            
+            [PropertyTooltip("Hi!")]
+            [ShowInInspector]
+            internal string SomeInternalStuff { get; set; }
+
+            private string notShown;
+
+            public string publicShownStr;
+            
+            [ShowInInspector]
+            private int privateInt;
+        }
+
+        //[DisableContextMenu]
+        [PropertySpace]
+        [ShowInInspector]
+        //[HideReferenceObjectPickerAttribute]
+        [ListDrawerSettings(AllowDrag = false, HideAddButton = true, HideRemoveButton = true)]
         private List<ComponentView> ComponentsOnEntity {
             get {
                 this.componentViews.Clear();
@@ -31,8 +73,8 @@ namespace Morpeh.Editor {
                         var data = this.entity.componentsIds.GetValueByIndex(slotIndex);
                         var view = new ComponentView {
                             internalTypeDefinition = CommonTypeIdentifier.intTypeAssociation[slot],
-                            id        = data,
-                            world     = this.entity.world
+                            id                     = data,
+                            world                  = this.entity.world
                         };
                         this.componentViews.Add(view);
                     }
@@ -42,7 +84,6 @@ namespace Morpeh.Editor {
             }
             set { }
         }
-
 
         [PropertyTooltip("$" + nameof(FullName))]
         [Serializable]
@@ -54,19 +95,19 @@ namespace Morpeh.Editor {
             internal bool   IsMarker => this.internalTypeDefinition.typeInfo.isMarker;
             internal string FullName => this.internalTypeDefinition.type.FullName;
 
-            [ShowIf("$" + nameof(IsMarker))]
+            [ShowIf(nameof(IsMarker))]
             [HideLabel]
-            [DisplayAsString(false)]
+            //[DisplayAsString(false)]
             [ShowInInspector]
             internal string TypeName => this.internalTypeDefinition.type.Name;
 
             internal int id;
 
-            [DisableContextMenu]
-            [HideIf("$" + nameof(IsMarker))]
-            [LabelText("$" + nameof(TypeName))]
+            //[DisableContextMenu]
+            [HideIf(nameof(IsMarker), Condition = true)]
+            //[LabelText("$" + nameof(TypeName))]
             [ShowInInspector]
-            [HideReferenceObjectPickerAttribute]
+            //[HideReferenceObjectPickerAttribute]
             public object Data {
                 get {
                     if (this.internalTypeDefinition.typeInfo.isMarker || Application.isPlaying == false) {
@@ -86,13 +127,12 @@ namespace Morpeh.Editor {
         }
     }
 
+    //[HideReferenceObjectPicker]
     [Serializable]
     [InlineProperty]
-    [HideReferenceObjectPicker]
     [HideLabel]
-    [Title("","Debug Info", HorizontalLine = true)]
+    [Title("Debug info", drawLine = true)]
     internal class EntityViewerWithHeader : EntityViewer {
-        
     }
 }
 #endif

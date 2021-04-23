@@ -1,5 +1,6 @@
 ﻿namespace Morpeh.Globals {
     using System.Runtime.CompilerServices;
+    using Frigg;
 #if UNITY_EDITOR && ODIN_INSPECTOR
     using Sirenix.OdinInspector;
 #endif
@@ -13,12 +14,12 @@
     public class Singleton : BaseSingleton {
         [Space]
         [SerializeReference]
-#if UNITY_EDITOR && ODIN_INSPECTOR
+#if UNITY_EDITOR
         [HideIf(nameof(ShowSerializedComponents))]
 #endif
         public IComponent[] serializedComponents = new IComponent[0];
 
-#if UNITY_EDITOR && ODIN_INSPECTOR
+#if UNITY_EDITOR
         private bool ShowSerializedComponents => this.internalEntityID > -1;
 #endif
 

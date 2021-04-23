@@ -3,29 +3,25 @@ namespace Morpeh.Unity.Utils.Editor {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-#if ODIN_INSPECTOR
-    using Sirenix.OdinInspector;
-#endif
+    using Frigg;
     using UnityEditor;
     using UnityEngine;
 
     [CreateAssetMenu(menuName = "ECS/Utils/Define")]
     public class DefineAsset : ScriptableObject {
         private const string PREFS_KEY = "__MORPEH_DEFINES";
-#if ODIN_INSPECTOR
+        
         [OnValueChanged(nameof(OnChange))]
-#endif
         [SerializeField]
         private List<DefineWrapper> defines = default;
 
         [Serializable]
         private class DefineWrapper {
-#if ODIN_INSPECTOR
+            
             [HideLabel]
             [InlineProperty]
             [OnValueChanged(nameof(OnChange))]
-            [DelayedProperty]
-#endif
+            //[DelayedProperty]
             public string define = default;
             
             private void OnChange() {

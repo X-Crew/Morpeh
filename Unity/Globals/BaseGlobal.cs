@@ -2,9 +2,6 @@ namespace Morpeh.Globals {
     using System;
     using ECS;
     using JetBrains.Annotations;
-#if ODIN_INSPECTOR
-    using Sirenix.OdinInspector;
-#endif
     using Unity.IL2CPP.CompilerServices;
 #if UNITY_EDITOR
     using UnityEditor;

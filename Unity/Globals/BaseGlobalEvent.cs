@@ -3,8 +3,6 @@ namespace Morpeh.Globals {
     using System.Collections.Generic;
     using ECS;
     using UnityEngine;
-#if ODIN_INSPECTOR
-#endif
     using Unity.IL2CPP.CompilerServices;
 
     [Il2CppSetOption(Option.NullChecks, false)]
@@ -27,7 +25,7 @@ namespace Morpeh.Globals {
                 return component.Data;
             }
         }
-
+        
         public sealed override string LastToString() => this.Serialize(this.BatchedChanges.Peek());
         public abstract string Serialize(TData data);
         public abstract TData  Deserialize(string serializedData);
