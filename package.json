@@ -9,7 +9,8 @@
     "morpeh",
     "ecs"
   ],
-  "dependencies": {},
+  "dependencies": {
+  "com.scellecs.frigg": "https://github.com/scellecs/frigg"},
   "repository": {
     "type": "git",
     "url": "https://github.com/X-Crew/Morpeh"
