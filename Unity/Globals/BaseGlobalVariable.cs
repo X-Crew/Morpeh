@@ -74,27 +74,11 @@
             this.value = newValue;
             this.OnChange(newValue);
         }
-        
-        public void SetValueNextFrame(TData newValue) {
-            this.value = newValue;
-            this.OnChangeNextFrame(newValue);
-        }
-        
-        private void OnChange() {
-            this.OnChange(this.value);
-        }
-        
+
         private void OnChange(TData newValue) {
             if (Application.isPlaying) {
                 this.CheckIsInitialized();
                 this.Publish(newValue);
-            }
-        }
-        
-        private void OnChangeNextFrame(TData newValue) {
-            if (Application.isPlaying) {
-                this.CheckIsInitialized();
-                this.NextFrame(newValue);
             }
         }
 

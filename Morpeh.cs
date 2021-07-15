@@ -76,6 +76,7 @@ namespace Morpeh {
     [Il2Cpp(Option.NullChecks, false)]
     [Il2Cpp(Option.ArrayBoundsChecks, false)]
     [Il2Cpp(Option.DivideByZeroChecks, false)]
+    [Serializable]
     public sealed class Entity {
         //todo support hotreload
         [NonSerialized]
@@ -1082,6 +1083,7 @@ namespace Morpeh {
             world.Filter         = new Filter(world);
             world.filters        = new FastList<Filter>();
             world.archetypeCache = new IntFastList();
+            world.dirtyEntities  = new FastList<Entity>();
 
             if (world.archetypes != null) {
                 foreach (var archetype in world.archetypes) {
@@ -1099,7 +1101,6 @@ namespace Morpeh {
         internal static World Initialize(this World world) {
             World.worlds.Add(world);
             world.identifier        = World.worlds.length - 1;
-            world.dirtyEntities     = new FastList<Entity>();
             world.freeEntityIDs     = new IntFastList();
             world.nextFreeEntityIDs = new IntFastList();
             world.caches            = new UnsafeIntHashMap<int>(Constants.DEFAULT_WORLD_CACHES_CAPACITY);
@@ -1438,7 +1439,6 @@ namespace Morpeh {
         [SerializeField]
         internal int id;
 
-        //todo support hotreload
         [NonSerialized]
         internal World world;
 
@@ -1449,7 +1449,6 @@ namespace Morpeh {
             this.entities       = new FastList<Entity>();
             this.addTransfer    = new UnsafeIntHashMap<int>();
             this.removeTransfer = new UnsafeIntHashMap<int>();
-            this.bagParts       = new FastList<ComponentsBagPart>();
 
             this.isDirty = false;
             this.worldId = worldId;
@@ -1500,8 +1499,9 @@ namespace Morpeh {
     internal static class ArchetypeExtensions {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Ctor(this Archetype archetype) {
-            archetype.world   = World.worlds.data[archetype.worldId];
-            archetype.filters = new FastList<Filter>();
+            archetype.world    = World.worlds.data[archetype.worldId];
+            archetype.filters  = new FastList<Filter>();
+            archetype.bagParts = new FastList<Archetype.ComponentsBagPart>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1994,6 +1994,19 @@ namespace Morpeh {
                 }
             }
 
+            throw new InvalidOperationException("The source sequence is empty.");
+        }
+        
+        [CanBeNull]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity FirstOrDefault(this Filter filter) {
+            for (int i = 0, length = filter.archetypes.length; i < length; i++) {
+                var archetype = filter.archetypes.data[i];
+                if (archetype.length > 0) {
+                    return archetype.entities.data[0];
+                }
+            }
+
             return default;
         }
 
@@ -2152,7 +2165,8 @@ namespace Morpeh {
                 return;
             }
 
-            info = new CommonTypeIdentifier.TypeInfo(UnsafeUtility.SizeOf<T>() == 1, typeof(IDisposable).IsAssignableFrom(typeof(T)));
+            var typeFieldsLength = typeof(T).GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Length;
+            info = new CommonTypeIdentifier.TypeInfo(typeFieldsLength == 0, typeof(IDisposable).IsAssignableFrom(typeof(T)));
             var id = CommonTypeIdentifier.GetID<T>();
             info.SetID(id);
         }
@@ -2169,6 +2183,10 @@ namespace Morpeh {
 
         [SerializeField]
         internal int commonCacheId;
+        [SerializeField]
+        internal int typedCacheId;
+        [SerializeField]
+        internal int typeId;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal abstract void Remove(in int id);
@@ -2187,13 +2205,23 @@ namespace Morpeh {
         internal FastList<T> components;
         [SerializeField]
         internal IntStack freeIndexes;
-        [SerializeField]
-        internal int typedCacheId;
-        [SerializeField]
-        internal int typeId;
 
         static ComponentsCache() {
             cleanup += () => typedCaches.Clear();
+        }
+
+        static void Refill() {
+            var id = TypeIdentifier<T>.info.id;
+            if (typedCaches == null) {
+                typedCaches = new FastList<ComponentsCache<T>>();
+            }
+            typedCaches.Clear();
+            
+            foreach (var cache in caches) {
+                if (cache.typeId == id) {
+                    typedCaches.Add((ComponentsCache<T>)cache);
+                }
+            }
         }
 
         internal ComponentsCache() {
